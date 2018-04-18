@@ -37,7 +37,8 @@ class Test extends Model
         $cache = Yii::$app->cache; 
         $cachePath = $w.'account_city';
         $data = $cache->get($cachePath); 
-     
+        // $cache->delete($cachePath);
+        // $data = false;
         if ($data === false) { 
 
             $query  = new Query();
@@ -238,7 +239,7 @@ class Test extends Model
     } 
 
     //学校统计情况
-    public function account_list($province_id,$city_id,$area_id,$level)
+    public function account_list($province_id,$city_id,$area_id,$level,$type=-1)
     {
         if($level != 1 && empty($province_id) && empty($city_id) && empty($area_id)){
             return ['status'=>1,'msg'=>'获取列表为空','lists'=>[]]; 
@@ -251,14 +252,16 @@ class Test extends Model
 
          // 先从缓存里面读取数据，如果没有再从数据库获取
         $cache = Yii::$app->cache; 
-        $cachePath = $w.'account_list'; 
+        $cachePath = $w.'account_list';
         $data = $cache->get($cachePath); 
-      
+        // $cache->delete($cachePath);
+        // $data = false;
         if ($data === false) { 
             $query   = new Query(); 
             $result = $query->from('province_city_area')->select('name,id,sort')->all();
 
-             $sql = "select a.`id`,a.`province_id`,a.`city_id`,a.`area_id`,a.`title`,a.`corpid`,a.`teacher_count`,a.`school_type`,a.`class_info`,a.`sort`,p.`sort` as psort  from account as a,province_city_area as p where a.`area_id`= p.`id` ".$w;
+            $sql = "select a.`id`,a.`province_id`,a.`city_id`,a.`area_id`,a.`title`,a.`corpid`,a.`teacher_count`,a.`school_type`,a.`class_info`,a.`sort`,p.`sort` as psort  from account as a,province_city_area as p where a.`area_id`= p.`id` ".$w;
+            ($type >= 0) && $sql .= ' and a.`school_type`='.$type; 
 
             $account =  Yii::$app->db->createCommand($sql)->queryAll();
 

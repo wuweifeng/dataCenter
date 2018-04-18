@@ -48,9 +48,10 @@ class TestController extends Controller
         $city_id     = $request->get('city_id',''); 
         $area_id     = $request->get('area_id','');
         $level       = $request->get('level','');
+        $school_type = intval($request->get('school_type',-1));
 
         $Test = new Test();
-        $res  = $Test->account_list($province_id,$city_id,$area_id,$level);
+        $res  = $Test->account_list($province_id,$city_id,$area_id,$level,$school_type);
 
         $data = ['status'=>1,'info'=>'获取成功','lists'=>$res['data'],'sum'=>$res['sum']];
         return $data;
@@ -89,8 +90,8 @@ class TestController extends Controller
     public function actionLogin()
     {
         $request = Yii::$app->request;
-        $user_name = $request->get('user_name',''); 
-        $password  = $request->get('password','');
+        $user_name = $request->post('user_name',''); 
+        $password  = $request->post('password','');
 
         $Test = new Test();
         $data  = $Test->login($user_name,$password);
@@ -134,7 +135,8 @@ class TestController extends Controller
         $request = Yii::$app->request;
         $Test = new Test();
         $user_id = $request->get('user_id','');
-        $data  = $Test->user_zone($user_id);
+        $type    = $request->get('type','');
+        $data  = $Test->user_zone($user_id,'',$type);
 
         return $data;
     }
