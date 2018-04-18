@@ -16,7 +16,7 @@ class Account extends \yii\db\ActiveRecord{
     }
 
     public function getprovince_city_area(){
-         return $this->hasOne(provinceCityArea::className(), ['id' => 'area_id']);
+         return $this->hasOne(provinceCityArea::className(),['id' => 'area_id']);
     }
 
     //获取学校列表
