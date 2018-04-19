@@ -92,7 +92,7 @@ return [
                         'GET account_class'  => 'account_class',
                         'GET area_list'      => 'area_list',
                         'GET add_user'       => 'add_user',
-                        'POST login'         => 'login',
+                        'GET login'          => 'login',
                         'GET logout'         => 'logout',
                         'POST modify_pwd'    => 'modify_pwd',
                         'GET user_zone'      => 'user_zone',
@@ -179,6 +179,17 @@ return [
                     'pluralize'=>false,
                     'extraPatterns' => [
                         'GET schoolType'=> 'school-type',
+                        'GET schoolList'=> 'school-list',
+                        'GET proviceCityArea'=> 'provice-city-area',
+                    ]
+                ],
+
+                ['class'=>'yii\rest\UrlRule',
+                    'controller'=>'notice',
+                    'except'=>['delete','create','update','view'],
+                    'pluralize'=>false,
+                    'extraPatterns' => [
+                        'GET sendNotice'=> 'send-notice',
                     ]
                 ],
             ],

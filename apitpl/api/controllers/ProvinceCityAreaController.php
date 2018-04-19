@@ -18,9 +18,10 @@ class ProvincecityareaController extends Controller
        return Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
     }
 
-    public function actionList(){
-      
-
+    public function actionIndex(){
+   		$res = ProvinceCityArea::area_name(1837);
+   		return $res;
     }
+
 
 }

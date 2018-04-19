@@ -254,14 +254,15 @@ class Test extends Model
         $cache = Yii::$app->cache; 
         $cachePath = $w.'account_list';
         $data = $cache->get($cachePath); 
-        // $cache->delete($cachePath);
-        // $data = false;
+        
         if ($data === false) { 
             $query   = new Query(); 
             $result = $query->from('province_city_area')->select('name,id,sort')->all();
 
             $sql = "select a.`id`,a.`province_id`,a.`city_id`,a.`area_id`,a.`title`,a.`corpid`,a.`teacher_count`,a.`school_type`,a.`class_info`,a.`sort`,p.`sort` as psort  from account as a,province_city_area as p where a.`area_id`= p.`id` ".$w;
             ($type >= 0) && $sql .= ' and a.`school_type`='.$type; 
+
+            // var_dump($sql);die;
 
             $account =  Yii::$app->db->createCommand($sql)->queryAll();
 
@@ -663,7 +664,7 @@ class Test extends Model
                 $session->set('USER' , $user_info);
 
                 $user_zone = $this->user_zone($user_info['id'],1);
-                return ['status'=>1,'msg'=>'登录成功','res'=>$user_info,'user_zone'=>$user_zone];
+                return ['status'=>1,'msg'=>'登录成功','res'=>$user_info,'user_zone'=>$user_zone['data'],'show_status'=>$user_zone['show_status']];
             }
         }
     }
@@ -821,18 +822,47 @@ class Test extends Model
             }
         }
 
-      
-
         //拼接
         foreach ($province as $k => $v)      {$data[$k] = $v;}
         foreach ($province_city as $k => $v) {$data[$k] = $v;}
         foreach ($city_area as $k => $v)     {$data[$k] = $v;}
 
+        //慧学南通权限
+        $hxnt = '16,226,1902,1903,1904,1905,1906,1907,1908,1909,1910,3412,3413,';
+        $str = '1';
+        if($user_zone['province_id'] && strpos($hxnt,$user_zone['province_id'].',') !== false){
+            $str .= '1';
+        }
+        if($user_zone['province_id'] && strpos($hxnt,$user_zone['province_id'].',') === false){
+            $str .= '0';
+        }
+        if($user_zone['city_id'] && strpos($hxnt,$user_zone['city_id'].',') !== false){
+            $str .= '1';
+        }
+        if($user_zone['city_id'] && strpos($hxnt,$user_zone['city_id'].',') === false){
+            $str .= '0';
+        }
+        if($user_zone['area_id'] && strpos($hxnt,$user_zone['area_id'].',') !== false){
+            $str .= '1';
+        }
+        if($user_zone['area_id'] && strpos($hxnt,$user_zone['area_id'].',') === false){
+            $str .= '0';
+        }
+        
+        if(strpos($str,'0') !== false){
+            $show_status = 0;
+        }else{
+            $show_status = 1;
+        }
 
         if($static == 1){
-            return $data;
+            $return_data['show_status'] = $show_status;
+            $return_data['data'] = $data;
+            return $return_data;
+        }elseif ($static == 2) {
+            return ['province' => $province, 'province_city' => $province_city, 'city_area' => $city_area];
         }else{
-            return ['status'=>1,'msg'=>'获取成功','res'=>$data,'user'=>$user];
+            return ['status'=>1,'msg'=>'获取成功','res'=>$data,'user'=>$user,'show_status'=>$show_status];
         }
        
     }

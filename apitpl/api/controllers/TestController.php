@@ -90,8 +90,8 @@ class TestController extends Controller
     public function actionLogin()
     {
         $request = Yii::$app->request;
-        $user_name = $request->post('user_name',''); 
-        $password  = $request->post('password','');
+        $user_name = $request->get('user_name',''); 
+        $password  = $request->get('password','');
 
         $Test = new Test();
         $data  = $Test->login($user_name,$password);

@@ -69,11 +69,11 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
         if($school_type >= 0)       $w['a.school_type'] = $school_type;
 
         // 先从缓存里面读取数据，如果没有再从数据库获取
-        // $cache = Yii::$app->cache; 
-        // $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'msgAccount';
-        // $data = $cache->get($cachePath);
+        $cache = Yii::$app->cache; 
+        $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'msgAccount';
+        $data = $cache->get($cachePath);
  
-        // if ($data === false) { 
+        if ($data === false) { 
             if(!empty($time))  {
                 if($type == 3){
                     $time = functions::getMonthRangeByTime($time);
@@ -191,13 +191,13 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
 
 
             $data = $account;
-        //     //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
-        //     $cacheData = $data;
-        //     //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
-        //     //第二个参数即是我们要缓存的数据 
-        //     //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
-        //     $cache->set($cachePath, $cacheData, 60*60*12); 
-        // }
+            //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
+            $cacheData = $data;
+            //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
+            //第二个参数即是我们要缓存的数据 
+            //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
+            $cache->set($cachePath, $cacheData, 60*60*12); 
+        }
 
         return $data;
     }
@@ -221,11 +221,11 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
         if(!empty($area_id))        $w['a.area_id']     = $area_id;
      
         // 先从缓存里面读取数据，如果没有再从数据库获取
-        // $cache = Yii::$app->cache; 
-        // $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'msgArea';
-        // $data = $cache->get($cachePath);
-    
-        //if ($data === false) {
+        $cache = Yii::$app->cache; 
+        $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'msgArea';
+        $data = $cache->get($cachePath);
+   
+        if ($data === false) {
 
             if(!empty($time))  {
                 if($type == 3){
@@ -245,6 +245,7 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
 
             //获取区
             $areas = ProvinceCityArea::areaList($province_id,$city_id,$area_id);
+
             //获取学校列表
             $account = Account::list($w);
             //获取天数
@@ -266,6 +267,7 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
             }    
             
             foreach ($areas as $k => $v) {
+
                 $qid_arr = [];
                 foreach ($account as $area_id => $school) {
                     if($v['id'] == $area_id){
@@ -316,189 +318,84 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
                 $areas[$k]['count_all'] = $count_all;
             }
 
-             $data = $areas;
-        //     //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
-        //     $cacheData = $data;
-        //     //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
-        //     //第二个参数即是我们要缓存的数据 
-        //     //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
-        //     $cache->set($cachePath, $cacheData, 60*60*12); 
-        // }
+            //判断所有区是否都有学校,缺少area_name
+            foreach ($areas as $k => $v) {
+                if(empty($v['area_name']))  $areas[$k]['area_name'] = ProvinceCityArea::area_name($v['id']);
+            }
+
+
+            $data = $areas;
+            //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
+            $cacheData = $data;
+            //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
+            //第二个参数即是我们要缓存的数据 
+            //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
+            $cache->set($cachePath, $cacheData, 60*60*12); 
+        }
 
         return $data;
     }
 
 
     //慧学南通学校访问量
-    public function visitAccount($province_id,$city_id=226,$area_id,$time,$type,$appid,$school_type,$msg_type)
+    public function visitAccount($province_id,$city_id,$area_id,$time,$type,$appid,$school_type,$msg_type)
     {
         $w = '';
         if(!empty($province_id))    $w['a.province_id'] = $province_id;
         if(!empty($city_id))        $w['a.city_id']     = $city_id;
         if(!empty($area_id))        $w['a.area_id']     = $area_id;
         if($school_type >= 0)       $w['a.school_type'] = $school_type;
-
-        if(!empty($time))  {
-            if($type == 3){
-                $time = functions::getMonthRangeByTime($time);
-            }elseif($type == 2){
-                $time = functions::getSevenDaysRangeByTime($time);
-            }elseif($type == 4){
-                $time = functions::getYearRangeByTime($time);
-            }
-           
-            $stime = $time['stime'];
-            $etime = $time['etime'];
-        }else{
-            $stime = '';
-            $etime = '';
-        }
-
-        //获取天数
-        if($type == 3) {
-            $date_type = 'd';
-            //月份的每一天
-            $days = functions::getMonthDays(date('Y-m',$stime),$date_type);
-        }elseif ($type == 2) {
-            $date_type = 'd';
-            //周的每一天
-            $days = functions::getSevenDaysByTime($stime,$date_type);
-        }elseif ($type == 4) {
-            $date_type = 'm';
-            //1年12个月
-            $days = [];
-            for ($i=0; $i < 12; $i++) { 
-                $days[$i]['date'] = strval($i+1);
-            }
-        }    
-
-
-        //获取学校列表
-        $qid_arr = [];
-        $account = [];
-        $account_list = Account::list($w);
-
-        foreach ($account_list as $k => $v) {
-            foreach ($v as $a => $school) {
-                $account[] = $school;
-                $qid_arr[] = intval($school['id']);
-            }
-        }
-
-        $where['qid']       = $qid_arr;
-        if(!empty($appid))  $where['jump_id'] = $appid;
-        //访问列表
-        $jump_list = QyJumpcontact::list($where,$stime,$etime);
-
-        foreach ($account as $k => $v) {
-            $visitInfo = [];
-            foreach ($jump_list as $list) {
-                if($v['id'] == $list['qid']) $visitInfo[] = $list;    
-            }
-
-            $account[$k]['visitInfo'] = $visitInfo;
-
-            unset($account[$k]['city_id']);
-            unset($account[$k]['area_id']);
-            unset($account[$k]['province_id']);
-            unset($account[$k]['school_type']);
-        }
-        
-        foreach ($account as $k => $school) {
-           
-            //每天访问总计
-            foreach ($days as $a => $date) {
-                $visit_num = 0;
-
-                foreach ($school['visitInfo'] as $val) {
-                    if($date['date'] == date($date_type,$val['create_time'])){
-                        $visit_num ++;
-                    }
+        // 先从缓存里面读取数据，如果没有再从数据库获取
+        $cache = Yii::$app->cache; 
+        $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'visitArea';
+        $data = $cache->get($cachePath);
+        // $cache->delete($cachePath);
+        // $data = false;
+        if ($data === false) {
+            if(!empty($time))  {
+                if($type == 3){
+                    $time = functions::getMonthRangeByTime($time);
+                }elseif($type == 2){
+                    $time = functions::getSevenDaysRangeByTime($time);
+                }elseif($type == 4){
+                    $time = functions::getYearRangeByTime($time);
                 }
-
-                $days[$a]['visit_num'] = $visit_num;
+               
+                $stime = $time['stime'];
+                $etime = $time['etime'];
+            }else{
+                $stime = '';
+                $etime = '';
             }
 
-            //去除
-            unset($account[$k]['visitInfo']);
-
-            //合计
-            $new_days = [];
-            $count_all = 0;
-            foreach (array_values($days) as $a => $date) {
-                $new_days[('count'.$a)]  =  $date['visit_num'];
-                $count_all               += $date['visit_num'];
-            }
-
-            //返回31行
-            $new_days = $this->thirty_days($new_days,count($new_days)-1,'count');
-
-            $account[$k]['days'] = $new_days;
-            $account[$k]['count_all'] = $count_all;
-        }        
-
-        return $account;
-
-    }
+            //获取天数
+            if($type == 3) {
+                $date_type = 'd';
+                //月份的每一天
+                $days = functions::getMonthDays(date('Y-m',$stime),$date_type);
+            }elseif ($type == 2) {
+                $date_type = 'd';
+                //周的每一天
+                $days = functions::getSevenDaysByTime($stime,$date_type);
+            }elseif ($type == 4) {
+                $date_type = 'm';
+                //1年12个月
+                $days = [];
+                for ($i=0; $i < 12; $i++) { 
+                    $days[$i]['date'] = strval($i+1);
+                }
+            }    
 
 
-    //慧学南通地区访问量
-    public function visitArea($province_id,$city_id=226,$area_id,$time,$type,$appid,$msg_type)
-    {
-        if(!empty($time))  {
-            if($type == 3){
-                $time = functions::getMonthRangeByTime($time);
-            }elseif($type == 2){
-                $time = functions::getSevenDaysRangeByTime($time);
-            }elseif($type == 4){
-                $time = functions::getYearRangeByTime($time);
-            }
-           
-            $stime = $time['stime'];
-            $etime = $time['etime'];
-        }else{
-            $stime = '';
-            $etime = '';
-        }
-
-        $w = '';
-        if(!empty($province_id))    $w['a.province_id'] = $province_id;
-        if(!empty($city_id))        $w['a.city_id']     = $city_id;
-        if(!empty($area_id))        $w['a.area_id']     = $area_id;
- 
-
-        //获取天数
-        if($type == 3) {
-            $date_type = 'd';
-            //月份的每一天
-            $days = functions::getMonthDays(date('Y-m',$stime),$date_type);
-        }elseif ($type == 2) {
-            $date_type = 'd';
-            //周的每一天
-            $days = functions::getSevenDaysByTime($stime,$date_type);
-        }elseif ($type == 4) {
-            $date_type = 'm';
-            //1年12个月
-            $days = [];
-            for ($i=0; $i < 12; $i++) { 
-                $days[$i]['date'] = strval($i+1);
-            }
-        }    
-
-        //获取区
-        $areas = ProvinceCityArea::areaList($province_id,$city_id,$area_id);
-
-        //获取学校列表
-        $account = Account::list($w);
-        
-        foreach ($areas as $k => $v) {
+            //获取学校列表
             $qid_arr = [];
-            foreach ($account as $area_id => $school) {
-                if($v['id'] == $area_id){
-                    $areas[$k]['area_name'] = $school[0]['area_name'];
-                    foreach ($school as $school_info) {
-                        $qid_arr[] = intval($school_info['id']);
-                    }
+            $account = [];
+            $account_list = Account::list($w);
+
+            foreach ($account_list as $k => $v) {
+                foreach ($v as $a => $school) {
+                    $account[] = $school;
+                    $qid_arr[] = intval($school['id']);
                 }
             }
 
@@ -506,37 +403,186 @@ class WxMsgStatis extends \yii\db\ActiveRecord{
             if(!empty($appid))  $where['jump_id'] = $appid;
             //访问列表
             $jump_list = QyJumpcontact::list($where,$stime,$etime);
-            //每天访问总计
-            foreach ($days as $a => $date) {
-                $visit_num = 0;
-                foreach ($jump_list as $val) {
-                    if($date['date'] == date($date_type,$val['create_time'])){
-                        $visit_num ++;
+
+            foreach ($account as $k => $v) {
+                $visitInfo = [];
+                foreach ($jump_list as $list) {
+                    if($v['id'] == $list['qid']) $visitInfo[] = $list;    
+                }
+
+                $account[$k]['visitInfo'] = $visitInfo;
+
+                unset($account[$k]['city_id']);
+                unset($account[$k]['area_id']);
+                unset($account[$k]['province_id']);
+                unset($account[$k]['school_type']);
+            }
+            
+            foreach ($account as $k => $school) {
+               
+                //每天访问总计
+                foreach ($days as $a => $date) {
+                    $visit_num = 0;
+
+                    foreach ($school['visitInfo'] as $val) {
+                        if($date['date'] == date($date_type,$val['create_time'])){
+                            $visit_num ++;
+                        }
+                    }
+
+                    $days[$a]['visit_num'] = $visit_num;
+                }
+
+                //去除
+                unset($account[$k]['visitInfo']);
+
+                //合计
+                $new_days = [];
+                $count_all = 0;
+                foreach (array_values($days) as $a => $date) {
+                    $new_days[('count'.$a)]  =  $date['visit_num'];
+                    $count_all               += $date['visit_num'];
+                }
+
+                //返回31行
+                $new_days = $this->thirty_days($new_days,count($new_days)-1,'count');
+
+                $account[$k]['days'] = $new_days;
+                $account[$k]['count_all'] = $count_all;
+            }
+
+            $data = $account;
+            //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
+            $cacheData = $data;
+            //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
+            //第二个参数即是我们要缓存的数据 
+            //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
+            $cache->set($cachePath, $cacheData, 60*60*12); 
+        }
+        return $data;
+
+    }
+
+
+    //慧学南通地区访问量
+    public function visitArea($province_id,$city_id,$area_id,$time,$type,$appid,$msg_type)
+    {
+
+        $w = '';
+        if(!empty($province_id))    $w['a.province_id'] = $province_id;
+        if(!empty($city_id))        $w['a.city_id']     = $city_id;
+        if(!empty($area_id))        $w['a.area_id']     = $area_id;
+
+        // 先从缓存里面读取数据，如果没有再从数据库获取
+        $cache = Yii::$app->cache; 
+        $cachePath = json_encode($w).$time.$type.$appid.$msg_type.'visitArea';
+        $data = $cache->get($cachePath);
+        // $cache->delete($cachePath);
+        // $data = false;
+
+        if ($data === false) {
+
+            if(!empty($time))  {
+                if($type == 3){
+                    $time = functions::getMonthRangeByTime($time);
+                }elseif($type == 2){
+                    $time = functions::getSevenDaysRangeByTime($time);
+                }elseif($type == 4){
+                    $time = functions::getYearRangeByTime($time);
+                }
+               
+                $stime = $time['stime'];
+                $etime = $time['etime'];
+            }else{
+                $stime = '';
+                $etime = '';
+            }
+            
+            //获取天数
+            if($type == 3) {
+                $date_type = 'd';
+                //月份的每一天
+                $days = functions::getMonthDays(date('Y-m',$stime),$date_type);
+            }elseif ($type == 2) {
+                $date_type = 'd';
+                //周的每一天
+                $days = functions::getSevenDaysByTime($stime,$date_type);
+            }elseif ($type == 4) {
+                $date_type = 'm';
+                //1年12个月
+                $days = [];
+                for ($i=0; $i < 12; $i++) { 
+                    $days[$i]['date'] = strval($i+1);
+                }
+            }    
+
+            //获取区
+            $areas = ProvinceCityArea::areaList($province_id,$city_id,$area_id);
+
+            //获取学校列表
+            $account = Account::list($w);
+            
+            foreach ($areas as $k => $v) {
+                $qid_arr = [];
+                foreach ($account as $area_id => $school) {
+                    if($v['id'] == $area_id){
+                        $areas[$k]['area_name'] = $school[0]['area_name'];
+                        foreach ($school as $school_info) {
+                            $qid_arr[] = intval($school_info['id']);
+                        }
                     }
                 }
 
-                $days[$a]['visit_num'] = $visit_num;
-            }
+                $where['qid']       = $qid_arr;
+                if(!empty($appid))  $where['jump_id'] = $appid;
+                //访问列表
+                $jump_list = QyJumpcontact::list($where,$stime,$etime);
+                //每天访问总计
+                foreach ($days as $a => $date) {
+                    $visit_num = 0;
+                    foreach ($jump_list as $val) {
+                        if($date['date'] == date($date_type,$val['create_time'])){
+                            $visit_num ++;
+                        }
+                    }
 
-      
-            //合计
-            $new_days = [];
-            $count_all = 0;
-            foreach (array_values($days) as $a => $date) {
-                $new_days[('count'.$a)]  =  $date['visit_num'];
-                $count_all               += $date['visit_num'];
-            }
+                    $days[$a]['visit_num'] = $visit_num;
+                }
 
-            //返回31行
-            $new_days = $this->thirty_days($new_days,count($new_days)-1,'count');
+          
+                //合计
+                $new_days = [];
+                $count_all = 0;
+                foreach (array_values($days) as $a => $date) {
+                    $new_days[('count'.$a)]  =  $date['visit_num'];
+                    $count_all               += $date['visit_num'];
+                }
 
-            $areas[$k]['days'] = $new_days;
-            $areas[$k]['count_all'] = $count_all;
+                //返回31行
+                $new_days = $this->thirty_days($new_days,count($new_days)-1,'count');
+
+                $areas[$k]['days'] = $new_days;
+                $areas[$k]['count_all'] = $count_all;
 
 
-        }        
-        
-        return $areas;
+            }     
+
+             //判断所有区是否都有学校,缺少area_name
+            foreach ($areas as $k => $v) {
+                if(empty($v['area_name']))  $areas[$k]['area_name'] = ProvinceCityArea::area_name($v['id']);
+            }  
+
+            $data = $areas;
+            //这里我们可以操作数据库获取数据，然后通过$cache->set方法进行缓存 
+            $cacheData = $data;
+            //set方法的第一个参数是我们的数据对应的key值，方便我们获取到 
+            //第二个参数即是我们要缓存的数据 
+            //第三个参数是缓存时间，如果是0，意味着永久缓存。默认是0 
+            $cache->set($cachePath, $cacheData, 60*60*12); 
+        }
+
+
+        return $data;
     }
 
 
